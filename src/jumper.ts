@@ -82,7 +82,7 @@ export default class Jumper {
      * 
      * @param An input key
      */
-    async setKey(key: string) {
+    async getTagsForKey(key: string) {
         const editor = this.activeEditor;
         const {text, offset} = this.getTextAndOffsetAroundPosition();
 
@@ -101,12 +101,21 @@ export default class Jumper {
         }
 
         const labelLength = indices.length > 26 ? 2 : 1;
+        
+        // if we have a label of length 2, we omit one out of every adjacent pair
+        if (labelLength === 2) {
+            for (let i = 0, len = indices.length; i < len; i++) {
+                if (indices[i + 1] - indices[i] === 1) {
+                    indices.splice(i + 1, 1);
+                }
+            }
+        }
 
         const tags = indices.map((i, j) => {
             return new Tag(j, text.substr(i, labelLength), editor.document.positionAt(i), labelLength);
         });
 
-        return await this.setTags(tags);
+        return tags;
     }
 
      /**

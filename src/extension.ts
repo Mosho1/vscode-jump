@@ -28,7 +28,8 @@ export function activate(context: vscode.ExtensionContext) {
         if (jumper.state === JumperState.Jump) {
             await jumper.keypress(args.text);
         } else if (jumper.state === JumperState.Input) {
-            await jumper.setKey(args.text)
+            const tags = await jumper.getTagsForKey(args.text);
+            await jumper.setKey(tags)
         } else {
             vscode.commands.executeCommand('default:type', args);
         }
