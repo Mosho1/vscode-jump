@@ -4,7 +4,7 @@ const indexToChar = i => String.fromCharCode(65 + i);
 
 const generateLabelFromIndex = (i, labelLength) => labelLength < 2 ? indexToChar(i) : indexToChar(i / 26) + indexToChar(i % 26);
 
-class Tag {
+export class Tag {
     range: vscode.Range;
     label: string;
 
@@ -24,6 +24,9 @@ class Tag {
 
 export interface JumperOptions {
     decoratorOptions?: vscode.DecorationRenderOptions;
+    editor?: vscode.TextEditor;
+    range?: number[];
+    numTags?: number;
 };
 
 export enum JumperState { Inactive, Input, Jump };
@@ -37,21 +40,40 @@ export default class Jumper {
     textEditorDecorationType: vscode.TextEditorDecorationType;
     state = JumperState.Inactive;
 
-    numTags = 26;
-    range = [-30, 30]
+    numTags: number;
+    range: number[];
 
-    get activeEditor() {
-        return vscode.window.activeTextEditor
-    };
+    _activeEditor: vscode.TextEditor;
 
     tags: Tag[] = null;
 
     get tagLength() {
+        if (!this.tags) return null;
         const tag = this.tags[0];
-        return tag ? tag.length : null;
+        if (!tag) return null;
+        return tag.length;
     }
 
-    constructor(options: JumperOptions) {
+    constructor(options?: JumperOptions) {
+        this.config(options);
+    }
+
+    get activeEditor() {
+        return this._activeEditor || vscode.window.activeTextEditor;
+    }
+
+    defaultOptions: JumperOptions = {
+        editor: null,
+        numTags: 26,
+        range: [-30, 30],
+        decoratorOptions: {} 
+    }
+
+    config(options: JumperOptions = {}) {
+        options = Object.assign({}, this.defaultOptions, options);
+        this._activeEditor = options.editor;
+        this.numTags = options.numTags;
+        this.range = options.range;
         this.textEditorDecorationType = vscode.window.createTextEditorDecorationType(options.decoratorOptions);
     }
 
