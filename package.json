@@ -17,7 +17,12 @@
     "contributes": {
         "commands": [{
             "command": "extension.toggleLabels",
-            "title": "Hello World"
+            "title": "AceJumper: Start"
+        }],
+        "keybindings": [{
+            "command": "extension.toggleLabels",
+            "key": "ctrl+'",
+            "mac": "cmd+'"
         }]
     },
     "scripts": {
