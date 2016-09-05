@@ -21,15 +21,22 @@ export function activate(context: vscode.ExtensionContext) {
     const jumper = new Jumper({ decoratorOptions });
 
     context.subscriptions.push(vscode.commands.registerCommand('extension.toggleLabels', async function () {
+        await jumper.clearTags();
         jumper.state = JumperState.Input;
     }));
 
+    // TODO: disengage if anything but a-z is pressed
     context.subscriptions.push(vscode.commands.registerCommand('type', async function (args: { text: string }) {
         if (jumper.state === JumperState.Jump) {
             await jumper.keypress(args.text);
         } else if (jumper.state === JumperState.Input) {
-            const tags = await jumper.getTagsForKey(args.text);
-            await jumper.setTags(tags);
+            // TODO put this in jumper.ts?
+            if (jumper.isValidKey(args.text)) {
+                const tags = await jumper.getTagsForKey(args.text);
+                await jumper.setTags(tags);
+            } else {
+                await jumper.clearTags();
+            }
         } else {
             vscode.commands.executeCommand('default:type', args);
         }

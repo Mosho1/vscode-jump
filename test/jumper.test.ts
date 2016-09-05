@@ -1,20 +1,15 @@
-//
-// Note: This example test is leveraging the Mocha test framework.
-// Please refer to their documentation on https://mochajs.org/ for help.
-//
-
-// The module 'assert' provides assertion methods from node
 import {expect} from 'chai';
 
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from 'vscode';
 import Jumper, {Tag} from '../src/jumper';
 
-// Defines a Mocha test suite to group tests of similar kind together
+/* TODO: add tests
+* 1. check if tags are create with a relative position
+
+*/
+
 suite("Jumper Tests", () => {
 
-    // Defines a Mocha unit test
     test("constructor", () => {
         const options = {editor: true} as any;
         const jumper = new Jumper(options);

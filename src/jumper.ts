@@ -4,6 +4,10 @@ const indexToChar = i => String.fromCharCode(65 + i);
 
 const generateLabelFromIndex = (i, labelLength) => labelLength < 2 ? indexToChar(i) : indexToChar(i / 26) + indexToChar(i % 26);
 
+const getRangeAtPosition = (position: vscode.Position, length = 1) => {
+    return new vscode.Range(position, position.translate(0, length));
+};
+
 export class Tag {
     range: vscode.Range;
     label: string;
@@ -30,10 +34,6 @@ export interface JumperOptions {
 };
 
 export enum JumperState { Inactive, Input, Jump };
-
-const getRangeAtPosition = (position: vscode.Position, length = 1) => {
-    return new vscode.Range(position, position.translate(0, length));
-};
 
 export default class Jumper {
 
@@ -66,7 +66,7 @@ export default class Jumper {
         editor: null,
         numTags: 26,
         range: [-30, 30],
-        decoratorOptions: {} 
+        decoratorOptions: {}
     }
 
     config(options: JumperOptions = {}) {
@@ -96,7 +96,13 @@ export default class Jumper {
         const text = editor.document.getText(range);
         const offset = positionOffset - startOffset;
 
-        return { text, offset };
+        return { text, offset, startOffset };
+    }
+
+    keyRegex = /[a-z]/i
+
+    isValidKey(key: string) {
+        return this.keyRegex.test(key);
     }
 
     /**
@@ -106,7 +112,7 @@ export default class Jumper {
      */
     async getTagsForKey(key: string) {
         const editor = this.activeEditor;
-        const {text, offset} = this.getTextAndOffsetAroundPosition();
+        const {text, offset, startOffset} = this.getTextAndOffsetAroundPosition();
 
         const indices: number[] = [];
 
@@ -123,7 +129,7 @@ export default class Jumper {
         }
 
         const labelLength = indices.length > 26 ? 2 : 1;
-        
+
         // if we have a label of length 2, we omit one out of every adjacent pair
         if (labelLength === 2) {
             for (let i = 0, len = indices.length; i < len; i++) {
@@ -134,17 +140,17 @@ export default class Jumper {
         }
 
         const tags = indices.map((i, j) => {
-            return new Tag(j, text.substr(i, labelLength), editor.document.positionAt(i), labelLength);
+            return new Tag(j, text.substr(i, labelLength), editor.document.positionAt(startOffset + i), labelLength);
         });
 
         return tags;
     }
 
-     /**
-     * Set tags across the editor
-     * 
-     * @param An array of tags
-     */
+    /**
+    * Set tags across the editor
+    * 
+    * @param An array of tags
+    */
     async setTags(tags: Tag[]) {
         if (this.tags) await this.clearTags();
         if (tags.length === 0) return false;
@@ -168,15 +174,18 @@ export default class Jumper {
      * @return A boolean indicating succesful edit
      */
     async clearTags() {
-        const didEdits = await this.activeEditor.edit(editBuilder => {
-            this.tags.forEach(({range, characters}) => {
-                editBuilder.replace(range, characters);
+        let didEdits = false;
+        if (this.tags && this.tags.length > 0) {
+            const didEdits = await this.activeEditor.edit(editBuilder => {
+                this.tags.forEach(({range, characters}) => {
+                    editBuilder.replace(range, characters);
+                });
             });
-        });
 
-        this.activeEditor.setDecorations(this.textEditorDecorationType, []);
+            this.activeEditor.setDecorations(this.textEditorDecorationType, []);
 
-        this.tags = null;
+            this.tags = null;
+        }
         this.state = JumperState.Inactive;
         return didEdits;
     }
